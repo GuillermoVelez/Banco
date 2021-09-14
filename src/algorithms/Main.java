@@ -10,6 +10,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.LinkedList;
 import static java.lang.Thread.sleep;
+import java.util.Iterator;
 import java.util.TimerTask;
 import javax.swing.JLabel;
 import java.util.Timer;
@@ -23,17 +24,15 @@ public class Main extends javax.swing.JFrame {
     // Referencia estatica al GUI
     static Main gui = new Main();
 
-    // Procesos individuales
-    Thread1 thread1 = new Thread1();
-    Thread2 thread2 = new Thread2();
-
     //  Cola
     LinkedList cola = new LinkedList();//Usamos LinkedList
-
+    // Booleano
+    boolean atendiendo = false;
     // ID's
-    int id = 0;
+    int contador2 = 201810200;
+    int id = 2018102010;
     Cliente clienteAtender = new Cliente(874328792, 0);
-
+    String Matriz[][];
     // Variable booleana que indica si uno de los algoritmos se ejecuta o se detiene
     public static boolean eventFlag;
 
@@ -83,10 +82,6 @@ public class Main extends javax.swing.JFrame {
         setTurn(val);
     }
 
-    public void updateStatusP1(String s) {
-        lblStatusP1.setText(s);
-    }
-
     public void updateStatusP2(String s) {
         lblStatusP2.setText(s);
     }
@@ -114,6 +109,7 @@ public class Main extends javax.swing.JFrame {
     }
 
     public void setOperationProgressBarP1(String s) {
+
         switch (s) {
             case "bussy":
                 pbProceso1.setIndeterminate(true);
@@ -167,6 +163,32 @@ public class Main extends javax.swing.JFrame {
         }
     }
 
+    public void inicializarClientes() {
+        for (int i = 1; i <= 10; i++) {
+            Cliente c2 = new Cliente(contador2, i);
+            cola.add(c2);
+            contador2++;
+        }
+        Matriz = new String[cola.size()][2];
+        int cont = 0;
+        for (Iterator it = cola.iterator(); it.hasNext();) {
+            Cliente c = (Cliente) it.next();
+            Matriz = mostrar(Matriz, cont, c);
+            System.out.println(c.getId());
+            cont += 1;
+        }
+        informacionCliente.setModel(new javax.swing.table.DefaultTableModel(
+                Matriz,
+                new String[]{
+                    "ID", "Peticiones"
+                }
+        ));
+        setVisibleProgressBarP1("show");
+        setOperationProgressBarP1("wait");
+        ClientesEspera.setText("Clientes en espera: " + cola.size());
+
+    }
+
     public void criticalSection(Cliente c) {
         /*Timer timer = new Timer(1000, new ActionListener() {
             @Override
@@ -184,9 +206,13 @@ public class Main extends javax.swing.JFrame {
 
                 @Override
                 public void run() {
+
+                    System.out.println(atendiendo);
                     while (cont > 0) {
                         c.setTransacciones(c.getTransacciones() - 1);
-                        AtenderCliente.setText("Atendiendo Cliente: " + c.getId() + " " + c.getTransacciones());
+                        AtenderCliente.setText("Atendiendo Cliente: ");
+                        clienteAtendido.setText("" + c.getId());
+                        lblStatusP2.setText("" + c.getTransacciones());
                         try {
                             sleep(1000);
 
@@ -195,6 +221,8 @@ public class Main extends javax.swing.JFrame {
                         }
 
                     }
+                    atendiendo = false;
+                    System.out.println(atendiendo);
                     Atender.setEnabled(true);
                     if (c.getTransacciones() > 0) {
                         System.out.println("Vuelve a entrar");
@@ -206,8 +234,24 @@ public class Main extends javax.swing.JFrame {
                     }
                     ClientesEspera.setText("Clientes en espera: " + cola.size());
                     AtenderCliente.setText("Esperando cliente...");
+                    clienteAtendido.setText("");
+                    lblStatusP2.setText("");
+                    Matriz = new String[cola.size()][2];
+                    int cont = 0;
+                    for (Iterator it = cola.iterator(); it.hasNext();) {
+                        Cliente c = (Cliente) it.next();
+                        Matriz = mostrar(Matriz, cont, c);
+                        System.out.println(c.getId());
+                        cont += 1;
+                    }
+                    informacionCliente.setModel(new javax.swing.table.DefaultTableModel(
+                            Matriz,
+                            new String[]{
+                                "ID", "Peticiones"
+                            }
+                    ));
                     setOperationProgressBarP2("wait");
-                    if(cola.size()==0){
+                    if (cola.size() == 0) {
                         setVisibleProgressBarP2("hide");
                     }
                     //t.cancel();
@@ -219,9 +263,12 @@ public class Main extends javax.swing.JFrame {
             t.schedule(new TimerTask() {
                 @Override
                 public void run() {
+                    System.out.println(atendiendo);
                     while (c.getTransacciones() > 0) {
                         c.setTransacciones(c.getTransacciones() - 1);
-                        AtenderCliente.setText("Atendiendo Cliente: " + c.getId() + " " + c.getTransacciones());
+                        AtenderCliente.setText("Atendiendo Cliente: ");
+                        clienteAtendido.setText("" + c.getId());
+                        lblStatusP2.setText("" + c.getTransacciones());
                         try {
                             sleep(1000);
                             System.out.println(c.getTransacciones());
@@ -230,6 +277,8 @@ public class Main extends javax.swing.JFrame {
                         }
 
                     }
+                    atendiendo = false;
+                    System.out.println(atendiendo);
                     Atender.setEnabled(true);
                     if (c.getTransacciones() > 0) {
                         System.out.println("Vuelve a entrar");
@@ -241,8 +290,10 @@ public class Main extends javax.swing.JFrame {
                     }
                     ClientesEspera.setText("Clientes en espera: " + cola.size());
                     AtenderCliente.setText("Esperando cliente...");
+                    clienteAtendido.setText("");
+                    lblStatusP2.setText("");
                     setOperationProgressBarP2("wait");
-                    if(cola.size()==0){
+                    if (cola.size() == 0) {
                         setVisibleProgressBarP2("hide");
                     }
                 }
@@ -273,28 +324,13 @@ public class Main extends javax.swing.JFrame {
         pbProceso2.setBorderPainted(false);
 
         inicializarObjetos();
-        //     cola.offer(3);
-        //     cola.add(14);
-        //     cola.offer(12);
-        //     cola.add(7);
-        //     cola.offer(10);
-        //     cola.add(10.5);
-        //     cola.add("cadena");
-
-        // ("Cola llena: " + cola);
-        // while(cola.poll()!=null){      
-        //     ("Cola llenaaa: " + cola);
-        //     (cola.peek());        
-        // }    
-        // (cola.peek()); 
+        inicializarClientes();
     }
 
     private void inicializarObjetos() {
         // Inicializa estilos por defecto de objetos
         pbProceso1.setVisible(false);
         pbProceso2.setVisible(false);
-
-        lblStatusP1.setText("-");
         lblStatusP2.setText("-");
     }
 
@@ -312,13 +348,16 @@ public class Main extends javax.swing.JFrame {
         AtenderCliente = new javax.swing.JLabel();
         pbProceso1 = new javax.swing.JProgressBar();
         pbProceso2 = new javax.swing.JProgressBar();
-        jLabel4 = new javax.swing.JLabel();
-        jLabel5 = new javax.swing.JLabel();
-        lblStatusP1 = new javax.swing.JLabel();
+        clienteAtendido = new javax.swing.JLabel();
         lblStatusP2 = new javax.swing.JLabel();
         Aniadir = new javax.swing.JButton();
         Atender = new javax.swing.JButton();
         Transacciones = new javax.swing.JTextField();
+        jLabel1 = new javax.swing.JLabel();
+        jLabel2 = new javax.swing.JLabel();
+        jLabel3 = new javax.swing.JLabel();
+        jScrollPane1 = new javax.swing.JScrollPane();
+        informacionCliente = new javax.swing.JTable();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -335,14 +374,9 @@ public class Main extends javax.swing.JFrame {
         AtenderCliente.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         AtenderCliente.setText("No hay clientes para atender");
 
-        jLabel4.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        jLabel4.setText("Status");
-
-        jLabel5.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        jLabel5.setText("Status");
-
-        lblStatusP1.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        lblStatusP1.setText("-");
+        clienteAtendido.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        clienteAtendido.setMaximumSize(new java.awt.Dimension(300, 20));
+        clienteAtendido.setMinimumSize(new java.awt.Dimension(300, 20));
 
         lblStatusP2.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         lblStatusP2.setText("-");
@@ -361,47 +395,64 @@ public class Main extends javax.swing.JFrame {
             }
         });
 
+        jLabel1.setText("Peticiones");
+
+        jLabel2.setText("Peticiones:");
+
+        jLabel3.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
+        jLabel3.setText("ID:");
+
+        informacionCliente.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+                {null, null},
+                {null, null},
+                {null, null},
+                {null, null}
+            },
+            new String [] {
+                "ID", "Peticiones"
+            }
+        ));
+        jScrollPane1.setViewportView(informacionCliente);
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
+                .addGap(26, 26, 26)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(ClientesEspera, javax.swing.GroupLayout.PREFERRED_SIZE, 309, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(pbProceso1, javax.swing.GroupLayout.PREFERRED_SIZE, 309, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addGroup(layout.createSequentialGroup()
-                        .addGap(26, 26, 26)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(ClientesEspera, javax.swing.GroupLayout.PREFERRED_SIZE, 309, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(pbProceso1, javax.swing.GroupLayout.PREFERRED_SIZE, 309, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(Aniadir)
-                                .addGap(34, 34, 34)
-                                .addComponent(Transacciones, javax.swing.GroupLayout.PREFERRED_SIZE, 86, javax.swing.GroupLayout.PREFERRED_SIZE))))
-                    .addGroup(layout.createSequentialGroup()
-                        .addContainerGap()
-                        .addComponent(jLabel4, javax.swing.GroupLayout.PREFERRED_SIZE, 328, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addComponent(lblStatusP1, javax.swing.GroupLayout.PREFERRED_SIZE, 361, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addComponent(Aniadir)
+                        .addGap(34, 34, 34)
+                        .addComponent(Transacciones, javax.swing.GroupLayout.PREFERRED_SIZE, 86, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(27, 27, 27)
+                        .addComponent(jLabel1)))
+                .addGap(227, 227, 227)
+                .addComponent(Atender)
+                .addGap(70, 70, 70)
+                .addComponent(jButton1)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(18, 18, 18)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createSequentialGroup()
-                        .addGap(105, 105, 105)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                                .addComponent(pbProceso2, javax.swing.GroupLayout.PREFERRED_SIZE, 309, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addGap(29, 29, 29))
-                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                                .addComponent(jLabel5, javax.swing.GroupLayout.PREFERRED_SIZE, 82, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addGap(137, 137, 137))
-                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                                .addComponent(lblStatusP2, javax.swing.GroupLayout.PREFERRED_SIZE, 233, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addGap(0, 0, Short.MAX_VALUE))))
-                    .addGroup(layout.createSequentialGroup()
-                        .addGap(201, 201, 201)
-                        .addComponent(Atender)
-                        .addGap(70, 70, 70)
-                        .addComponent(jButton1)
-                        .addContainerGap())
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(AtenderCliente, javax.swing.GroupLayout.PREFERRED_SIZE, 323, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(pbProceso2, javax.swing.GroupLayout.PREFERRED_SIZE, 309, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(jLabel3, javax.swing.GroupLayout.PREFERRED_SIZE, 38, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addGap(40, 40, 40)
+                                .addComponent(clienteAtendido, javax.swing.GroupLayout.PREFERRED_SIZE, 177, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addComponent(AtenderCliente, javax.swing.GroupLayout.PREFERRED_SIZE, 323, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addGap(52, 52, 52))
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(jLabel2)
+                        .addGap(50, 50, 50)
+                        .addComponent(lblStatusP2, javax.swing.GroupLayout.PREFERRED_SIZE, 102, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addContainerGap())))
         );
         layout.setVerticalGroup(
@@ -412,27 +463,34 @@ public class Main extends javax.swing.JFrame {
                     .addComponent(jButton1)
                     .addComponent(Aniadir)
                     .addComponent(Atender)
-                    .addComponent(Transacciones, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(Transacciones, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel1))
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
                         .addGap(34, 34, 34)
-                        .addComponent(AtenderCliente))
+                        .addComponent(ClientesEspera))
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(ClientesEspera)))
-                .addGap(18, 18, 18)
+                        .addComponent(AtenderCliente)))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                     .addComponent(pbProceso1, javax.swing.GroupLayout.PREFERRED_SIZE, 30, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(pbProceso2, javax.swing.GroupLayout.PREFERRED_SIZE, 30, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(18, 18, 18)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel4)
-                    .addComponent(jLabel5))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(lblStatusP1, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(lblStatusP2, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(36, Short.MAX_VALUE))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGap(18, 18, 18)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(jLabel3)
+                            .addComponent(clienteAtendido, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(jLabel2)
+                            .addComponent(lblStatusP2, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addContainerGap())))
         );
 
         pack();
@@ -442,35 +500,91 @@ public class Main extends javax.swing.JFrame {
         // TODO add your handling code here:
         eventFlag = false;
         inicializarObjetos();
-        thread1.interrupt();
-        thread2.interrupt();
         System.exit(0);
     }//GEN-LAST:event_jButton1ActionPerformed
 
     private void AniadirActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_AniadirActionPerformed
         // TODO add your handling code here:
+
         id += 1;
         Cliente cliente = new Cliente(id, Integer.parseInt(Transacciones.getText()));
         cola.add(cliente);
         cliente = (Cliente) cola.element();
+        if (atendiendo) {
+            ClientesEspera.setText("Clientes en espera: " + (cola.size() - 1));
+            Matriz = new String[cola.size() - 1][2];
+            int cont = 0;
+            for (Iterator it = cola.iterator(); it.hasNext();) {
+                Cliente c = (Cliente) it.next();
+                if (cont != 0) {
+                    Matriz = mostrar(Matriz, cont - 1, c);
+                }
+                System.out.println(c.getId());
+                cont += 1;
+            }
+            informacionCliente.setModel(new javax.swing.table.DefaultTableModel(
+                    Matriz,
+                    new String[]{
+                        "ID", "Peticiones"
+                    }
+            ));
+        } else {
+            Matriz = new String[cola.size()][2];
+            int cont = 0;
+            for (Iterator it = cola.iterator(); it.hasNext();) {
+                Cliente c = (Cliente) it.next();
+                Matriz = mostrar(Matriz, cont, c);
+                System.out.println(c.getId());
+                cont += 1;
+            }
+            informacionCliente.setModel(new javax.swing.table.DefaultTableModel(
+                    Matriz,
+                    new String[]{
+                        "ID", "Peticiones"
+                    }
+            ));
+            ClientesEspera.setText("Clientes en espera: " + cola.size());
+        }
 
-        ClientesEspera.setText("Clientes en espera: " + cola.size());
         setVisibleProgressBarP1("show");
         setOperationProgressBarP1("wait");
 
     }//GEN-LAST:event_AniadirActionPerformed
-
+    public String[][] mostrar(String tabla[][], int contador, Cliente c) {
+        tabla[contador][0] = String.valueOf(c.getId());
+        tabla[contador][1] = String.valueOf(c.getTransacciones());
+        return tabla;
+    }
     private void AtenderActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_AtenderActionPerformed
         Atender.setEnabled(false);
         if (cola.size() > 0) {
             if (cola.size() - 1 == 0) {
                 setVisibleProgressBarP1("hide");
             }
+            Matriz = new String[cola.size() - 1][2];
+            int cont = 0;
+            for (Iterator it = cola.iterator(); it.hasNext();) {
+                Cliente c = (Cliente) it.next();
+                if (cont != 0) {
+                    Matriz = mostrar(Matriz, cont - 1, c);
+                }
+                System.out.println(c.getId());
+                cont += 1;
+            }
+            informacionCliente.setModel(new javax.swing.table.DefaultTableModel(
+                    Matriz,
+                    new String[]{
+                        "ID", "Peticiones"
+                    }
+            ));
             ClientesEspera.setText("Clientes en espera: " + (cola.size() - 1));
             setVisibleProgressBarP2("show");
             setOperationProgressBarP2("bussy");
             clienteAtender = (Cliente) cola.element();
-            AtenderCliente.setText("Atendiendo Cliente: " + clienteAtender.getId() + " " + clienteAtender.getTransacciones());
+            AtenderCliente.setText("Atendiendo Cliente: ");
+            clienteAtendido.setText("" + clienteAtender.getId());
+            lblStatusP2.setText("" + clienteAtender.getTransacciones());
+            atendiendo = true;
             criticalSection(clienteAtender);
         } else {
             Atender.setEnabled(true);
@@ -478,7 +592,7 @@ public class Main extends javax.swing.JFrame {
             setVisibleProgressBarP2("hide");
             setOperationProgressBarP2("bussy");
         }
-        
+
     }//GEN-LAST:event_AtenderActionPerformed
 
     /**
@@ -522,10 +636,13 @@ public class Main extends javax.swing.JFrame {
     private javax.swing.JLabel AtenderCliente;
     private javax.swing.JLabel ClientesEspera;
     private javax.swing.JTextField Transacciones;
+    private javax.swing.JLabel clienteAtendido;
+    private javax.swing.JTable informacionCliente;
     private javax.swing.JButton jButton1;
-    private javax.swing.JLabel jLabel4;
-    private javax.swing.JLabel jLabel5;
-    private javax.swing.JLabel lblStatusP1;
+    private javax.swing.JLabel jLabel1;
+    private javax.swing.JLabel jLabel2;
+    private javax.swing.JLabel jLabel3;
+    private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JLabel lblStatusP2;
     private javax.swing.JProgressBar pbProceso1;
     private javax.swing.JProgressBar pbProceso2;
